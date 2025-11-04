@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>可懿专属 - 美食选择助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF7A00',
+                        secondary: '#8B4513',
+                        neutral: '#FFF8E7',
+                        dark: '#3A2E21'
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Helvetica Neue', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .progress-bar {
+                height: 3px;
+                background: linear-gradient(90deg, #FF7A00 0%, #FFB74D 100%);
+                width: 0%;
+                transition: width 0.3s ease;
+            }
+            .ios-safe-area {
+                padding-bottom: constant(safe-area-inset-bottom);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-neutral min-h-screen font-sans text-dark overflow-x-hidden">
+    <div class="relative max-w-md mx-auto min-h-screen">
+        <!-- 背景图 -->
+        <div class="fixed inset-0 z-0">
+            <img src="https://picsum.photos/id/431/800/1600" alt="美食背景" class="w-full h-full object-cover opacity-15">
+        </div>
+        
+        <!-- 标题栏 -->
+        <header class="relative z-10 bg-gradient-to-r from-primary to-secondary py-6 px-6 shadow-md">
+            <h1 class="text-[clamp(1.8rem,5vw,2.5rem)] font-bold text-center tracking-wider text-white">可懿专属！</h1>
+        </header>
+        
+        <!-- 导航标签 -->
+        <div class="relative z-10 flex bg-white/90 shadow-sm">
+            <button id="tab1" class="flex-1 py-4 text-center font-medium text-primary border-b-2 border-primary transition-all">
+                <i class="fa fa-cutlery mr-2"></i>添加地点
+            </button>
+            <button id="tab2" class="flex-1 py-4 text-center font-medium text-gray-500 border-b-2 border-transparent transition-all">
+                <i class="fa fa-random mr-2"></i>随机选择
+            </button>
+        </div>
+        
+        <!-- 内容区域 -->
+        <main class="relative z-10 p-5 pb-20 ios-safe-area">
+            <!-- 第一个界面：输入名称和位置 -->
+            <section id="section1" class="space-y-6">
+                <div class="bg-white rounded-2xl p-6 shadow-md">
+                    <h2 class="text-xl font-bold text-secondary mb-5 flex items-center">
+                        <i class="fa fa-plus-circle mr-2 text-primary"></i>添加美食地点
+                    </h2>
+                    
+                    <div class="space-y-5">
+                        <!-- 图片上传区域 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">美食图片</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-primary transition-colors cursor-pointer" id="imageUploadArea">
+                                <input type="file" id="imageUpload" accept="image/*" class="hidden" capture="environment">
+                                <i class="fa fa-camera text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-500 text-sm">点击上传图片</p>
+                                <p class="text-gray-400 text-xs mt-1">支持JPG、PNG格式</p>
+                            </div>
+                            
+                            <!-- 进度条 -->
+                            <div id="progressContainer" class="mt-3 hidden">
+                                <div class="text-xs text-gray-500 mb-1">处理中...</div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div id="progressBar" class="progress-bar rounded-full"></div>
+                                </div>
+                            </div>
+                            
+                            <div id="previewContainer" class="mt-3 hidden">
+                                <img id="imagePreview" src="" alt="预览图" class="w-full h-48 object-cover rounded-lg">
+                                <button id="removeImage" class="mt-2 text-sm text-red-500 hover:text-red-700 transition-colors">
+                                    <i class="fa fa-times mr-1"></i>移除图片
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">名称</label>
+                            <input type="text" id="name" placeholder="例如：外婆家餐厅" 
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all">
+                        </div>
+                        
+                        <div>
+                            <label for="location" class="block text-sm font-medium text-gray-700 mb-1">位置</label>
+                            <div class="flex">
+                                <input type="text" id="location" placeholder="例如：北京市朝阳区建国路88号" 
+                                    class="flex-1 px-4 py-3 rounded-l-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30 outline-none transition-all">
+                                <button id="locateBtn" class="bg-primary text-white px-4 rounded-r-lg hover:bg-primary/90 transition-all">
+                                    <i class="fa fa-map-marker"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button id="addBtn" class="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 active:scale-98 transition-all flex items-center justify-center">
+                            <i class="fa fa-plus-circle mr-2"></i>添加到列表
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 已添加的地点列表 -->
+                <div class="bg-white rounded-2xl p-6 shadow-md">
+                    <h2 class="text-xl font-bold text-secondary mb-4 flex items-center">
+                        <i class="fa fa-list-ul mr-2"></i>已添加的地点
+                        <span id="listCount" class="ml-2 text-sm bg-primary/20 text-primary px-2 py-1 rounded-full">0</span>
+                    </h2>
+                    
+                    <div id="locationList" class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                        <div class="text-gray-500 text-center py-10 border border-dashed rounded-lg">
+                            <i class="fa fa-folder-open-o text-3xl mb-3 opacity-50"></i>
+                            <p>暂无添加的地点</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 第二个界面：随机抽取 -->
+            <section id="section2" class="hidden space-y-6">
+                <div class="bg-white rounded-2xl p-6 shadow-md text-center">
+                    <h2 class="text-xl font-bold text-secondary mb-6">今日选择</h2>
+                    
+                    <div id="resultArea" class="min-h-[200px] flex flex-col items-center justify-center mb-8 p-4 border-2 border-dashed border-gray-300 rounded-xl">
+                        <i class="fa fa-cutlery text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">点击下方按钮开始抽取</p>
+                    </div>
+                    
+                    <button id="startBtn" class="w-full bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-lg font-bold text-lg hover:opacity-90 active:scale-98 transition-all flex items-center justify-center">
+                        <i class="fa fa-play-circle mr-2"></i>开始抽取
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-2xl p-6 shadow-md">
+                    <h2 class="text-xl font-bold text-secondary mb-4 flex items-center">
+                        <i class="fa fa-th-list mr-2"></i>所有可选地点
+                    </h2>
+                    
+                    <div id="allLocations" class="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                        <div class="text-gray-500 text-center py-8 border border-dashed rounded-lg">
+                            暂无可用地点，请先添加
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- 底部提示 -->
+        <footer class="relative z-10 bg-dark/80 text-white text-center py-3 text-sm ios-safe-area">
+            <p>可懿专属美食选择助手</p>
+        </footer>
+    </div>
+    
+    <!-- 通知提示 -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-dark text-white px-6 py-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 z-50"></div>
+
+    <script>
+        // 存储地点数据的数组
+        let locations = [];
+        try {
+            const stored = localStorage.getItem('foodLocations');
+            if (stored) locations = JSON.parse(stored);
+        } catch (e) {
+            locations = [];
+        }
+        
+        let currentImage = null;
+        
+        // DOM元素
+        const tab1 = document.getElementById('tab1');
+        const tab2 = document.getElementById('tab2');
+        const section1 = document.getElementById('section1');
+        const section2 = document.getElementById('section2');
+        const nameInput = document.getElementById('name');
+        const locationInput = document.getElementById('location');
+        const locateBtn = document.getElementById('locateBtn');
+        const addBtn = document.getElementById('addBtn');
+        const locationList = document.getElementById('locationList');
+        const listCount = document.getElementById('listCount');
+        const startBtn = document.getElementById('startBtn');
+        const resultArea = document.getElementById('resultArea');
+        const allLocations = document.getElementById('allLocations');
+        const toast = document.getElementById('toast');
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const removeImage = document.getElementById('removeImage');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        
+        // 初始化
+        updateLocationList();
+        updateAllLocations();
+        updateListCount();
+        
+        // 图片上传功能 - 优化处理速度
+        imageUploadArea.addEventListener('click', () => {
+            imageUpload.click();
+        });
+        
+        imageUpload.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                
+                // 检查文件类型
+                if (!file.type.startsWith('image/')) {
+                    showToast('请上传图片文件');
+                    return;
+                }
+                
+                // 显示进度条
+                previewContainer.classList.add('hidden');
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = '10%';
+                
+                // 快速处理图片（核心优化点）
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = function() {
+                        // 第一阶段进度
+                        progressBar.style.width = '30%';
+                        
+                        // 简化压缩逻辑，减少处理时间
+                        let maxWidth = 480; // 降低目标分辨率，加快处理
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > maxWidth) {
+                            const ratio = maxWidth / width;
+                            width = maxWidth;
+                            height = height * ratio;
+                        }
+                        
+                        // 第二阶段进度
+                        progressBar.style.width = '60%';
+                        
+                        // 使用更高效的Canvas处理
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 减少绘制复杂度
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 第三阶段进度
+                        progressBar.style.width = '90%';
+                        
+                        // 降低质量参数但加快编码速度
+                        currentImage = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        // 完成处理
+                        imagePreview.src = currentImage;
+                        previewContainer.classList.remove('hidden');
+                        progressContainer.classList.add('hidden');
+                        progressBar.style.width = '0%';
+                        
+                        showToast('图片加载完成');
+                    };
+                    
+                    // 快速设置图片源
+                    img.src = event.target.result;
+                    
+                    // 超时保护（防止卡住）
+                    setTimeout(() => {
+                        if (progressBar.style.width !== '100%') {
+                            progressContainer.classList.add('hidden');
+                            showToast('图片处理超时，请重试');
+                        }
+                    }, 5000);
+                };
+                
+                // 读取文件
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 移除图片
+        removeImage.addEventListener('click', () => {
+            currentImage = null;
+            imageUpload.value = '';
+            previewContainer.classList.add('hidden');
+            showToast('图片已移除');
+        });
+        
+        // 标签切换
+        tab1.addEventListener('click', () => {
+            tab1.classList.add('text-primary', 'border-primary');
+            tab1.classList.remove('text-gray-500', 'border-transparent');
+            tab2.classList.add('text-gray-500', 'border-transparent');
+            tab2.classList.remove('text-primary', 'border-primary');
+            section1.classList.remove('hidden');
+            section2.classList.add('hidden');
+        });
+        
+        tab2.addEventListener('click', () => {
+            tab2.classList.add('text-primary', 'border-primary');
+            tab2.classList.remove('text-gray-500', 'border-transparent');
+            tab1.classList.add('text-gray-500', 'border-transparent');
+            tab1.classList.remove('text-primary', 'border-primary');
+            section2.classList.remove('hidden');
+            section1.classList.add('hidden');
+        });
+        
+        // 定位功能
+        locateBtn.addEventListener('click', () => {
+            if (navigator.geolocation) {
+                showToast('正在获取位置...');
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        try {
+                            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=zh-CN`);
+                            const data = await response.json();
+                            
+                            if (data && data.display_name) {
+                                locationInput.value = data.display_name;
+                                showToast('位置获取成功');
+                            } else {
+                                locationInput.value = '附近区域';
+                                showToast('已获取位置');
+                            }
+                        } catch (error) {
+                            locationInput.value = '附近区域';
+                            showToast('已获取位置');
+                        }
+                    },
+                    (error) => {
+                        let message = '定位失败: ';
+                        switch(error.code) {
+                            case 1: message += '请在设置中允许位置权限'; break;
+                            case 2: message += '位置不可用'; break;
+                            case 3: message += '请求超时'; break;
+                            default: message += '未知错误';
+                        }
+                        showToast(message);
+                    },
+                    { timeout: 10000 }
+                );
+            } else {
+                showToast('浏览器不支持定位');
+            }
+        });
+        
+        // 添加地点
+        addBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            const location = locationInput.value.trim();
+            
+            if (!name) {
+                showToast('请输入名称');
+                nameInput.focus();
+                return;
+            }
+            
+            if (!location) {
+                showToast('请输入位置');
+                locationInput.focus();
+                return;
+            }
+            
+            try {
+                const newItem = {
+                    id: Date.now(),
+                    name,
+                    location,
+                    image: currentImage || null
+                };
+                
+                locations.push(newItem);
+                
+                // 优化存储速度
+                localStorage.setItem('foodLocations', JSON.stringify(locations));
+                
+                // 更新界面
+                updateLocationList();
+                updateAllLocations();
+                updateListCount();
+                
+                // 清空输入
+                nameInput.value = '';
+                locationInput.value = '';
+                currentImage = null;
+                imageUpload.value = '';
+                previewContainer.classList.add('hidden');
+                
+                showToast('添加成功');
+            } catch (e) {
+                console.error('添加失败:', e);
+                showToast('添加失败，请重试');
+            }
+        });
+        
+        // 开始抽取
+        startBtn.addEventListener('click', startDraw);
+        
+        function startDraw() {
+            if (locations.length === 0) {
+                showToast('请先添加地点');
+                return;
+            }
+            
+            resultArea.innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin text-4xl text-primary mb-3"></i><p>正在抽取中...</p></div>';
+            
+            // 抽奖动画
+            let animationInterval;
+            let counter = 0;
+            
+            animationInterval = setInterval(() => {
+                counter++;
+                const randomIndex = Math.floor(Math.random() * locations.length);
+                const tempSelected = locations[randomIndex];
+                
+                let tempHtml = '';
+                if (tempSelected.image) {
+                    tempHtml += `<img src="${tempSelected.image}" class="w-full h-32 object-cover rounded-lg mb-3">`;
+                }
+                tempHtml += `<h3 class="text-xl font-bold text-primary">${tempSelected.name}</h3>`;
+                
+                resultArea.innerHTML = tempHtml;
+                
+                if (counter >= 15) {
+                    clearInterval(animationInterval);
+                    
+                    setTimeout(() => {
+                        const finalIndex = Math.floor(Math.random() * locations.length);
+                        const selected = locations[finalIndex];
+                        
+                        let resultHtml = '';
+                        if (selected.image) {
+                            resultHtml += `<img src="${selected.image}" class="w-full h-32 object-cover rounded-lg mb-3">`;
+                        }
+                        resultHtml += `
+                            <h3 class="text-2xl font-bold text-primary mb-2">${selected.name}</h3>
+                            <p class="text-gray-600 mb-4">${selected.location}</p>
+                            <button class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600" 
+                                onclick="openMap('${encodeURIComponent(selected.name)}', '${encodeURIComponent(selected.location)}')">
+                                <i class="fa fa-map-o mr-1"></i>导航
+                            </button>
+                        `;
+                        
+                        resultArea.innerHTML = resultHtml;
+                    }, 300);
+                }
+            }, 100);
+        }
+        
+        // 地图跳转
+        function openMap(name, address) {
+            const searchQuery = `${name} ${address}`;
+            
+            try {
+                // 优先尝试系统地图
+                window.location.href = `maps://?q=${searchQuery}`;
+                setTimeout(() => {
+                    window.open(`https://maps.baidu.com/search/${searchQuery}`, '_blank');
+                }, 500);
+            } catch (e) {
+                window.open(`https://maps.baidu.com/search/${searchQuery}`, '_blank');
+            }
+        }
+        
+        // 更新地点列表
+        function updateLocationList() {
+            if (locations.length === 0) {
+                locationList.innerHTML = '<div class="text-gray-500 text-center py-10 border border-dashed rounded-lg">'+
+                    '<i class="fa fa-folder-open-o text-3xl mb-3 opacity-50"></i>'+
+                    '<p>暂无添加的地点</p>'+
+                '</div>';
+                return;
+            }
+            
+            locationList.innerHTML = '';
+            locations.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center p-3 bg-neutral rounded-xl hover:bg-neutral/70 transition-all';
+                
+                let imageHtml = '';
+                if (item.image) {
+                    imageHtml = `<img src="${item.image}" class="w-16 h-16 object-cover rounded-lg mr-3">`;
+                } else {
+                    imageHtml = `<div class="w-16 h-16 bg-gray-200 rounded-lg mr-3 flex items-center justify-center">
+                        <i class="fa fa-cutlery text-gray-400"></i>
+                    </div>`;
+                }
+                
+                div.innerHTML = `
+                    ${imageHtml}
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-medium truncate">${item.name}</h3>
+                        <p class="text-sm text-gray-500 truncate">${item.location}</p>
+                    </div>
+                    <button class="delete-btn text-red-500 hover:text-red-700 ml-2" data-id="${item.id}">
+                        <i class="fa fa-trash-o text-xl"></i>
+                    </button>
+                `;
+                locationList.appendChild(div);
+            });
+            
+            // 删除事件
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    locations = locations.filter(item => item.id !== id);
+                    localStorage.setItem('foodLocations', JSON.stringify(locations));
+                    updateLocationList();
+                    updateAllLocations();
+                    updateListCount();
+                    showToast('已删除');
+                });
+            });
+        }
+        
+        // 更新所有地点列表
+        function updateAllLocations() {
+            if (locations.length === 0) {
+                allLocations.innerHTML = '<div class="text-gray-500 text-center py-8 border border-dashed rounded-lg">暂无可用地点，请先添加</div>';
+                return;
+            }
+            
+            allLocations.innerHTML = '';
+            locations.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'p-2 border-b border-gray-100 last:border-0 hover:bg-neutral/50 rounded';
+                div.innerHTML = `<span class="text-sm flex items-center"><i class="fa fa-circle text-xs text-primary mr-2"></i>${item.name}</span>`;
+                allLocations.appendChild(div);
+            });
+        }
+        
+        // 更新列表计数
+        function updateListCount() {
+            listCount.textContent = locations.length;
+        }
+        
+        // 显示提示信息
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
